@@ -16,7 +16,7 @@ def x_sec_area(D):
     D -- internal diameter (m)
      
     """
-    if D <=0:
+    if np.any(D <=0):
         raise ValueError("Cannot find pipe x-sectional area as diameter is negative.")
     return np.pi * ((0.5 * D)**2)
 
@@ -29,7 +29,7 @@ def dyn_visc(T=10.):
     See http://en.wikipedia.org/wiki/Viscosity#Viscosity_of_water for eq.
 
     """
-    if T <= 0 or T >=100:
+    if np.any(T <= 0) or np.any(T >=100):
         raise ValueError("Cannot calc dynamic viscosity: temperature outside range [0,100].")
     A = 2.414*(10**-5) # Pa.s
     B = 247.8 # K 
@@ -164,7 +164,6 @@ def turnover_time(D, Q, L):
         raise ValueError("Invalid pipe length of {} m".format(L))
 
     return L / ((Q+0.) / x_sec_area(D))
-turnover_time = np.vectorize(turnover_time)
 
 def bed_shear_velocity(D, Q, k_s, T = 10.0, den = 1000.0):
     """Bed shear velocity (c.f. bed shear stress).
@@ -181,3 +180,8 @@ def bed_shear_velocity(D, Q, k_s, T = 10.0, den = 1000.0):
         raise ValueError("Invalid internal pipe diam of {} m".format(D))
     S_0 = hyd_grad(D, Q, k_s, T, den)
     return np.sqrt(g * (D / 4.0) * S_0)
+
+# Vectorize all funcs
+for func in (x_sec_area, dyn_visc, reynolds, friction_factor, hyd_grad, shear_stress, settling_velocity, turnover_time, bed_shear_velocity):
+    func = np.vectorize(func)
+    
