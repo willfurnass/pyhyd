@@ -17,7 +17,7 @@ def x_sec_area(D):
      
     """
     if np.any(D <=0):
-        raise ValueError("Cannot find pipe x-sectional area as diameter is negative.")
+        raise ValueError("Non-positive internal pipe diam.")
     return np.pi * ((0.5 * D)**2)
 
 def dyn_visc(T=10.):
@@ -46,7 +46,19 @@ def reynolds(D, Q, T = 10.0, den = 1000.0):
     den -- density defaults to 1000kg/m^3
      
     """
+    if np.any(D <=0):
+        raise ValueError("Non-positive internal pipe diam.")
+    if np.any(Q <=0):
+        raise ValueError("Non-positive pipe flow.")
+    if np.any(den <=0):
+        raise ValueError("Non-positive fluid density.")
     return ((Q / x_sec_area(D)) * D) / (dyn_visc(T) / (den+0.))
+
+def ff():
+    Re = reynolds
+    f = np.zeros(Re.shape)
+    f[Re < 2000] = 64 / Re[Re < 2000]
+    f[Re > 4000] = 0.25 / (np.log10((k_s / (3.7 * D)) + (5.74 / (Re**0.9))))**2
 
 def friction_factor(D, Q, k_s, T = 10.0, den = 1000.0):
     """Darcy-Weisbach friction factor.
@@ -101,12 +113,12 @@ def hyd_grad(D, Q, k_s, T=10.0, den=1000.0):
     den -- density defaults to 1000kg/m^3
 
     """
-    if den <= 0:
-        raise ValueError("Invalid density of {} kg/m^3".format(den))
-    if D <= 0:
-        raise ValueError("Invalid internal pipe diam of {} m".format(D))
-    if Q < 0:
-        raise ValueError("Invalid pipe flow of {} m^3/s".format(Q))
+    if np.any(den <= 0):
+        raise ValueError("Non-positive fluid density.")
+    if np.any(D <= 0):
+        raise ValueError("Non-positive internal pipe diam.")
+    if np.any(Q < 0):
+        raise ValueError("Non-negative pipe flow.")
     f = friction_factor(D, Q, k_s, T, den)
     S_0 = (f / (D+0.)) * (((Q / x_sec_area(D))**2.0) / (2.0 * g))
     return S_0
@@ -122,10 +134,10 @@ def shear_stress(D, Q, k_s, T = 10.0, den = 1000.0):
     den -- density defaults to 1000kg/m^3
 
     """
-    if den <= 0:
-        raise ValueError("Invalid density of {} kg/m^3".format(den))
-    if D <= 0:
-        raise ValueError("Invalid internal pipe diam of {} m".format(D))
+    if np.any(den <= 0):
+        raise ValueError("Non-positive density")
+    if np.any(D <= 0):
+        raise ValueError("Non-positive internal pipe diam.")
     return den * g * (D / 4.0) * hyd_grad(D, Q, k_s, T, den)
 
 def settling_velocity(den_part, D_part, T=10., den_fluid=1000.):
@@ -141,12 +153,12 @@ def settling_velocity(den_part, D_part, T=10., den_fluid=1000.):
      - The fluid is infinitely deep
 
     """
-    if den_part <= 0:
-        raise ValueError("Invalid particle density of {} kg/m^3".format(den_part))
-    if D_part <= 0:
-        raise ValueError("Invalid particle diameter of {} m".format(D_part))
-    if den_fluid <= 0:
-        raise ValueError("Invalid fluid density of {} kg/m^3".format(den_fluid))
+    if np.any(den_part <= 0):
+        raise ValueError("Non-positive particle density.")
+    if np.any(D_part <= 0):
+        raise ValueError("Non-positive particle diameter.")
+    if np.any(den_fluid <= 0):
+        raise ValueError("Non-positive fluid density.")
     return (2 / 9.) * ((den_part - den_fluid) / dyn_visc(T)) * g * ((D_part/2.)**2)
 
 def turnover_time(D, Q, L):
@@ -158,10 +170,10 @@ def turnover_time(D, Q, L):
     L -- pipe length (m)
 
     """
-    if Q <= 0:
-        raise ValueError("Invalid pipe flow of {} m^3/s".format(Q))
-    if L <= 0:
-        raise ValueError("Invalid pipe length of {} m".format(L))
+    if np.any(Q <= 0):
+        raise ValueError("Non-positive flow.")
+    if np.any(L <= 0):
+        raise ValueError("Non-positive pipe length.")
 
     return L / ((Q+0.) / x_sec_area(D))
 
@@ -176,8 +188,8 @@ def bed_shear_velocity(D, Q, k_s, T = 10.0, den = 1000.0):
     den -- density defaults to 1000kg/m^3
 
     """
-    if D <= 0:
-        raise ValueError("Invalid internal pipe diam of {} m".format(D))
+    if np.any(D <= 0):
+        raise ValueError("Non-positive pipe diam.")
     S_0 = hyd_grad(D, Q, k_s, T, den)
     return np.sqrt(g * (D / 4.0) * S_0)
 
