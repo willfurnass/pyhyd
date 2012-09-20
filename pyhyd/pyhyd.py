@@ -193,8 +193,3 @@ def bed_shear_velocity(D, Q, k_s, T = 10.0, den = 1000.0):
         raise ValueError("Non-positive pipe diam.")
     S_0 = hyd_grad(D, Q, k_s, T, den)
     return np.sqrt(g * (D / 4.0) * S_0)
-
-# Vectorize all funcs
-#for func in (x_sec_area, dyn_visc, reynolds, friction_factor, hyd_grad, shear_stress, settling_velocity, turnover_time, bed_shear_velocity):
-#    func = np.vectorize(func)
-    
