@@ -18,7 +18,7 @@ def x_sec_area(D):
     """
     if np.any(D <=0):
         raise ValueError("Non-positive internal pipe diam.")
-    return np.pi * ((0.5 * D)**2)
+    return np.pi * np.power((0.5 * D), 2)
 
 def dyn_visc(T=10.):
     """Dynamic viscosity of water (N.s.m^-2)
@@ -34,7 +34,7 @@ def dyn_visc(T=10.):
     A = 2.414*(10**-5) # Pa.s
     B = 247.8 # K 
     C = 140.0 # K
-    return A * 10**(B / (T + 273.15 - C))
+    return A * np.power(10, (B / (T + 273.15 - C)))
 
 def reynolds(D, Q, T = 10.0, den = 1000.0):
     """Reynolds number
@@ -54,13 +54,7 @@ def reynolds(D, Q, T = 10.0, den = 1000.0):
         raise ValueError("Non-positive fluid density.")
     return ((Q / x_sec_area(D)) * D) / (dyn_visc(T) / (den+0.))
 
-def ff():
-    Re = reynolds
-    f = np.zeros(Re.shape)
-    f[Re < 2000] = 64 / Re[Re < 2000]
-    f[Re > 4000] = 0.25 / (np.log10((k_s / (3.7 * D)) + (5.74 / (Re**0.9))))**2
-
-def friction_factor(D, Q, k_s, T = 10.0, den = 1000.0):
+def friction_factor(D, Q, k_s, T = 10.0, den = 1000.0, warn=False):
     """Darcy-Weisbach friction factor.
     
     Keyword arguments:
@@ -69,20 +63,27 @@ def friction_factor(D, Q, k_s, T = 10.0, den = 1000.0):
     k_s     -- roughness height (m)
     T -- temperature; defaults to 10degC)
     den -- density defaults to 1000kg/m^3
+    warn -- warn if the Swamee Jain formula is inappropriate 
+            due to k_s outside [0.004,0.05] or Re > 10e7
+
+    Laminar flow:      Hagen-Poiseuille formula
+    Transitional flow: cubic interpolation from Moody Diagram 
+                       for transition region as per the EPANET2 manual 
+                       (in turn taken from Dunlop (1991))
+    Turbulent flow: Swamee-Jain approximation of implicit Colebrook-White equation
      
     """
+    if np.any(k_s < 0):
+        raise ValueError("Negative pipe roughness.")
     Re = reynolds(D, Q, T, den)
     if Re == 0:
         f = 0
     elif Re < 2000:
-        # Hagen-Poiseuille formula for laminar flow
         f = 64 / Re
     elif 2000 <= Re < 4000:
-        # Cubic interpolation from Moody Diagram for transition region
-        # as per the EPANET2 manual (in turn taken from Dunlop (1991))
         y3 = -0.86859 * np.log((k_s / (3.7 * D)) + (5.74 / (4000**0.9)))
-        y2 = (k_s / (3.7 * D)) + (5.74 / (Re**0.9))
-        fa = y3**-2
+        y2 = (k_s / (3.7 * D)) + (5.74 / np.power(Re, 0.9))
+        fa = np.power(y3, -2)
         fb = fa * (2 - (0.00514215 / (y2*y3)))
         r = Re / 2000.
         x4 = r * (0.032 - (3. * fa) + (0.5 * fb))
@@ -91,16 +92,16 @@ def friction_factor(D, Q, k_s, T = 10.0, den = 1000.0):
         x1 = (7 * fa) - fb
         f = x1 + r * (x2 + r * (x3 + x4))
     elif Re >= 4000:
-        if k_s < 4e-4 or k_s > 5e-2:
-            raise ValueError("Swamee Jain approx to Colebrook White not valid for turb flow as " + 
-                             "k_s={}m (outside range [0.004,0.05])".format(k_s))
-        if k_s < 5e3 or Re > 1e7:
-            raise ValueError("Swamee Jain approx to Colebrook White not valid for turb flow as " + 
-                             "Re={} (outside range [5,000,10,000,000])".format(Re))
-        if k_s < 0 or Re < 0:
-            print k_s, Re
-        f = 0.25 / (np.log10((k_s / (3.7 * D)) + (5.74 / (Re**0.9))))**2
+        if warn:
+            if k_s < 4e-4 or k_s > 5e-2:
+                raise ValueError("Swamee Jain approx to Colebrook White not valid for turb flow as " + 
+                                 "k_s={}m (outside range [0.004,0.05])".format(k_s))
+            if Re > 1e7:
+                raise ValueError("Swamee Jain approx to Colebrook White not valid for turb flow as " + 
+                                 "Re={} (greater than 10,000,000)".format(Re))
+        f = 0.25 / np.power((np.log10((k_s / (3.7 * D)) + (5.74 / np.power(Re, 0.9)))), 2)
     return f
+friction_factor = np.vectorize(friction_factor)
 
 def hyd_grad(D, Q, k_s, T=10.0, den=1000.0):
     """Headloss per unit length of pipe (in m).
@@ -120,7 +121,7 @@ def hyd_grad(D, Q, k_s, T=10.0, den=1000.0):
     if np.any(Q < 0):
         raise ValueError("Non-negative pipe flow.")
     f = friction_factor(D, Q, k_s, T, den)
-    S_0 = (f / (D+0.)) * (((Q / x_sec_area(D))**2.0) / (2.0 * g))
+    S_0 = (f / (D+0.)) * (np.power((Q / x_sec_area(D)), 2) / (2 * g))
     return S_0
 
 def shear_stress(D, Q, k_s, T = 10.0, den = 1000.0):
@@ -159,7 +160,7 @@ def settling_velocity(den_part, D_part, T=10., den_fluid=1000.):
         raise ValueError("Non-positive particle diameter.")
     if np.any(den_fluid <= 0):
         raise ValueError("Non-positive fluid density.")
-    return (2 / 9.) * ((den_part - den_fluid) / dyn_visc(T)) * g * ((D_part/2.)**2)
+    return (2 / 9.) * ((den_part - den_fluid) / dyn_visc(T)) * g * np.power((D_part/2.), 2)
 
 def turnover_time(D, Q, L):
     """Time taken for fluid to traverse pipe at a given flow rate.
@@ -194,6 +195,6 @@ def bed_shear_velocity(D, Q, k_s, T = 10.0, den = 1000.0):
     return np.sqrt(g * (D / 4.0) * S_0)
 
 # Vectorize all funcs
-for func in (x_sec_area, dyn_visc, reynolds, friction_factor, hyd_grad, shear_stress, settling_velocity, turnover_time, bed_shear_velocity):
-    func = np.vectorize(func)
+#for func in (x_sec_area, dyn_visc, reynolds, friction_factor, hyd_grad, shear_stress, settling_velocity, turnover_time, bed_shear_velocity):
+#    func = np.vectorize(func)
     
