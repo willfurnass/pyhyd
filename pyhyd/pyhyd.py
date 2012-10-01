@@ -55,25 +55,8 @@ def reynolds(D, Q, T = 10.0, den = 1000.0):
         raise ValueError("Non-positive fluid density.")
     return ((Q / x_sec_area(D)) * D) / (dyn_visc(T) / (den+0.))
 
-def friction_factor(D, Q, k_s, T = 10.0, den = 1000.0, warn=False):
-    """Darcy-Weisbach friction factor.
-    
-    Keyword arguments:
-    D -- internal diameter (m)
-    Q -- flow (m^3s^-1)
-    k_s     -- roughness height (m)
-    T -- temperature; defaults to 10degC)
-    den -- density defaults to 1000kg/m^3
-    warn -- warn if the Swamee Jain formula is inappropriate 
-            due to k_s outside [0.004,0.05] or Re > 10e7
-
-    Laminar flow:      Hagen-Poiseuille formula
-    Transitional flow: cubic interpolation from Moody Diagram 
-                       for transition region as per the EPANET2 manual 
-                       (in turn taken from Dunlop (1991))
-    Turbulent flow: Swamee-Jain approximation of implicit Colebrook-White equation
-     
-    """
+def _friction_factor(D, Q, k_s, T = 10.0, den = 1000.0, warn=False):
+    # Helper function; see friction_factor
     if np.any(k_s < 0):
         raise ValueError("Negative pipe roughness.")
     Re = reynolds(D, Q, T, den)
@@ -102,7 +85,28 @@ def friction_factor(D, Q, k_s, T = 10.0, den = 1000.0, warn=False):
                                  "Re={} (greater than 10,000,000)".format(Re))
         f = 0.25 / np.power((np.log10((k_s / (3.7 * D)) + (5.74 / np.power(Re, 0.9)))), 2)
     return f
-friction_factor = np.vectorize(friction_factor)
+_friction_factor = np.vectorize(_friction_factor)
+
+def friction_factor(D, Q, k_s, T = 10.0, den = 1000.0, warn=False):
+    """Darcy-Weisbach friction factor.
+    
+    Keyword arguments:
+    D -- internal diameter (m)
+    Q -- flow (m^3s^-1)
+    k_s     -- roughness height (m)
+    T -- temperature; defaults to 10degC)
+    den -- density defaults to 1000kg/m^3
+    warn -- warn if the Swamee Jain formula is inappropriate 
+            due to k_s outside [0.004,0.05] or Re > 10e7
+
+    Laminar flow:      Hagen-Poiseuille formula
+    Transitional flow: cubic interpolation from Moody Diagram 
+                       for transition region as per the EPANET2 manual 
+                       (in turn taken from Dunlop (1991))
+    Turbulent flow: Swamee-Jain approximation of implicit Colebrook-White equation
+     
+    """
+    return _friction_factor(D, Q, k_s, T, den, warn)
 
 def hyd_grad(D, Q, k_s, T=10.0, den=1000.0):
     """Headloss per unit length of pipe (in m).
@@ -122,9 +126,7 @@ def hyd_grad(D, Q, k_s, T=10.0, den=1000.0):
     if np.any(Q < 0):
         raise ValueError("Non-negative pipe flow.")
     f = friction_factor(D, Q, k_s, T, den)
-    print f
     vel_sq = np.power((Q / x_sec_area(D)), 2)
-    print vel_sq
     return (f * vel_sq) / (D * 2 * g)
 
 def shear_stress(D, Q, k_s, T = 10.0, den = 1000.0):
