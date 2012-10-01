@@ -5,6 +5,7 @@ Note that SI units are used for all quantities
 """
 
 import numpy as np
+import scipy.optimize as sp_opt
 np.seterr(all='raise')
 
 g = 9.81
@@ -109,7 +110,7 @@ def hyd_grad(D, Q, k_s, T=10.0, den=1000.0):
     Keyword arguments:
     D -- internal diameter (m)
     Q -- flow (m^3s^-1)
-    k_s     -- roughness height (m)
+    k_s -- roughness height (m)
     T -- temperature; defaults to 10degC)
     den -- density defaults to 1000kg/m^3
 
@@ -121,8 +122,10 @@ def hyd_grad(D, Q, k_s, T=10.0, den=1000.0):
     if np.any(Q < 0):
         raise ValueError("Non-negative pipe flow.")
     f = friction_factor(D, Q, k_s, T, den)
-    S_0 = (f / (D+0.)) * (np.power((Q / x_sec_area(D)), 2) / (2 * g))
-    return S_0
+    print f
+    vel_sq = np.power((Q / x_sec_area(D)), 2)
+    print vel_sq
+    return (f * vel_sq) / (D * 2 * g)
 
 def shear_stress(D, Q, k_s, T = 10.0, den = 1000.0):
     """Hydraulic shear stress at pipe wall (in Pa).
@@ -130,7 +133,7 @@ def shear_stress(D, Q, k_s, T = 10.0, den = 1000.0):
     Keyword arguments:
     D -- internal diameter (m)
     Q -- flow (m^3s^-1)
-    k_s     -- roughness height (m)
+    k_s -- roughness height (m)
     T -- temperature; defaults to 10degC)
     den -- density defaults to 1000kg/m^3
 
@@ -140,6 +143,35 @@ def shear_stress(D, Q, k_s, T = 10.0, den = 1000.0):
     if np.any(D <= 0):
         raise ValueError("Non-positive internal pipe diam.")
     return den * g * (D / 4.0) * hyd_grad(D, Q, k_s, T, den)
+
+def _flow_from_shear(D, tau_a, k_s, T, den):
+    # Helper function required for numerically finding flow from shear stress
+    # as np.vectorize cannot handle optional arguments
+    return sp_opt.fminbound(
+        lambda Q: np.absolute(shear_stress(D, Q, k_s, T, den) - tau_a), 
+        x1 = 0e-10, 
+        x2 = 100, 
+        disp = 0)
+_flow_from_shear_v = np.vectorize(_flow_from_shear)
+
+def flow_from_shear(D, tau_a, k_s, T=10., den=1000.):
+    """Numerically find pipe flow given shear stress.
+
+    Keyword arguments:
+    D -- internal diameter (m)
+    tau_a -- shear stress (Pa)
+    k_s -- roughness height (m)
+    T -- temperature; defaults to 10degC)
+    den -- density defaults to 1000kg/m^3
+
+    """
+    if np.any(den <= 0):
+        raise ValueError("Non-positive density")
+    if np.any(D <= 0):
+        raise ValueError("Non-positive internal pipe diam.")
+    if np.any(tau_a <= 0):
+        raise ValueError("Non-positive shear stress.")
+    return _flow_from_shear_v(D, tau_a, k_s, T, den)
 
 def settling_velocity(den_part, D_part, T=10., den_fluid=1000.):
     """Settling velocity of a particle in a fluid (Stokes' Law)
