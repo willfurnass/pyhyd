@@ -23,16 +23,16 @@ def test_x_sec_area_bad_vec2():
     assert_raises(ValueError, ph.x_sec_area, diams)
 
 #TEST ph.dyn_visc(T=10.)
-def test_dyn_visc_valid_scalar():
-    pass
+#def test_dyn_visc_valid_scalar():
+#    pass
 def test_dyn_visc_too_low_scalar():
     assert_raises(ValueError, ph.dyn_visc, 0)
 def test_dyn_visc_too_high_scalar():
     assert_raises(ValueError, ph.dyn_visc, 100)
-def test_dyn_visc_valid_vec():
-    pass
-def test_dyn_visc_invalid_vec():
-    pass
+#def test_dyn_visc_valid_vec():
+#    pass
+#def test_dyn_visc_invalid_vec():
+#    pass
 
 #TEST ph.reynolds(D, Q, T = 10.0, den = 1000.0)
 def test_reynolds():
