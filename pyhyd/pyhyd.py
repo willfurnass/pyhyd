@@ -49,11 +49,9 @@ def reynolds(D, Q, T = 10.0, den = 1000.0):
     """
     if np.any(D <=0):
         raise ValueError("Non-positive internal pipe diam.")
-    if np.any(Q <=0):
-        raise ValueError("Non-positive pipe flow.")
     if np.any(den <=0):
         raise ValueError("Non-positive fluid density.")
-    return ((Q / x_sec_area(D)) * D) / (dyn_visc(T) / (den+0.))
+    return ((np.abs(Q) / x_sec_area(D)) * D) / (dyn_visc(T) / (den+0.))
 
 def _friction_factor(D, Q, k_s, T = 10.0, den = 1000.0, warn=False):
     # Helper function; see friction_factor
@@ -123,8 +121,6 @@ def hyd_grad(D, Q, k_s, T=10.0, den=1000.0):
         raise ValueError("Non-positive fluid density.")
     if np.any(D <= 0):
         raise ValueError("Non-positive internal pipe diam.")
-    if np.any(Q < 0):
-        raise ValueError("Non-negative pipe flow.")
     f = friction_factor(D, Q, k_s, T, den)
     vel_sq = np.power((Q / x_sec_area(D)), 2)
     return (f * vel_sq) / (D * 2 * g)
@@ -205,12 +201,10 @@ def turnover_time(D, Q, L):
     L -- pipe length (m)
 
     """
-    if np.any(Q <= 0):
-        raise ValueError("Non-positive flow.")
     if np.any(L <= 0):
         raise ValueError("Non-positive pipe length.")
 
-    return L / ((Q+0.) / x_sec_area(D))
+    return L / (np.abs(Q + 0.0) / x_sec_area(D))
 
 def bed_shear_velocity(D, Q, k_s, T = 10.0, den = 1000.0):
     """Bed shear velocity (c.f. bed shear stress).
