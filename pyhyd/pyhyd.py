@@ -206,6 +206,29 @@ def turnover_time(D, Q, L):
 
     return L / (np.abs(Q + 0.0) / x_sec_area(D))
 
+def flow_unit_conv(Q, from_vol, from_t, to_vol, to_t):
+    """Convert flow values between different units.
+
+    Keyword arguments:
+    Q -- flow value or values (can be a numpy array)
+    from_vol -- volume part of current units (one of 'ml', 'mL', 'l', 'L', 'm3', 'm^3', 'Ml', 'ML', 'tcm', 'TCM')
+    from_t -- time part of current units (one of 's', 'min', 'hour', 'day', 'd', 'D')
+    to_vol -- volume part of new units (one of 'ml', 'mL', 'l', 'L', 'm3', 'm^3', 'Ml', 'ML', 'tcm', 'TCM')
+    
+    """
+    vol_factors = {'ml':1e-6, 'mL':1e-6, 'l':1e-3, 'L':1e-3, 'm3,':1.0, 'm^3':1.0, 'Ml':1e3, 'ML':1e3, 'tcm':1e3, 'TCM':1e3}
+    time_factors = {'s':1.0, 'min':60.0, 'hour':3600.0, ', day':86400.0, 'd':86400.0, 'D':86400.0}
+
+    for unit in (from_vol, to_vol):
+        pass
+        if unit not in vol_factors.keys():
+            raise Exception("Cannot convert flow units: volume unit {} not in list {}".format(unit, vol_factors.keys()))
+    for unit in (from_t, to_t):
+        pass
+        if unit not in time_factors.keys():
+            raise Exception("Cannot convert flow units: time unit {} not in list {}".format(unit, time_factors.keys()))
+    return Q * (vol_factors[from_vol] / time_factors[from_t]) * (time_factors[to_t] / vol_factors[to_vol])
+
 def bed_shear_velocity(D, Q, k_s, T = 10.0, den = 1000.0):
     """Bed shear velocity (c.f. bed shear stress).
  
