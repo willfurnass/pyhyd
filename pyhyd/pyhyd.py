@@ -191,8 +191,8 @@ def hw_C_to_cw_k_s(D, Q, C):
     C -- Hazen Williams coefficient (m)
 
     """
-    res = sp_opt.minimize_scalar(lambda k_s : pl.absolute(hyd_grad_hw(D, Q, C) - 
-             pyhyd.hyd_grad(D, Q, k_s)), method = 'bounded', bounds = (1e-10, 0.05), tol = 1e-10)
+    res = sp_opt.minimize_scalar(lambda k_s : np.absolute(hyd_grad_hw(D, Q, C) - 
+             hyd_grad(D, Q, k_s)), method = 'bounded', bounds = (1e-10, 0.05), tol = 1e-10)
     if not res.success:
         raise Exception("Could not convert Hazen Williams C into Colebrook White k_s")
     return res.x
