@@ -11,12 +11,12 @@ def read(fname):
 
 setup(
     name = 'pyhyd', # Y
-    version = '0.1.1', # Y
+    version = '0.1.2', # Y
     packages = find_packages(),
 
     install_requires = [
         "numpy >= 1.5.1",
-        "matplotlib >= 1.0.1",
+        "scipy >= 0.11.0",
     ],
 
     author = 'Will Furnass',
@@ -25,6 +25,4 @@ setup(
                 'drinking water distribution networks',
     license='GPL 3.0',
     keywords='hydraulics drinking water distribution systems',
-    #url='http://pypi.python.org/pypi/PyShoal/',
-    #long_description=read('README.txt'),
 )
