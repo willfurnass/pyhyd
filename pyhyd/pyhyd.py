@@ -107,7 +107,7 @@ def friction_factor(D, Q, k_s, T = 10.0, den = 1000.0, warn=False):
     return _friction_factor(D, Q, k_s, T, den, warn)
 
 def hyd_grad(D, Q, k_s, T=10.0, den=1000.0):
-    """Headloss per unit length of pipe (in m).
+    """Headloss per unit length of pipe (in m), using approx. to Colebrook White eq.
 
     Keyword arguments:
     D -- internal diameter (m)
@@ -124,6 +124,17 @@ def hyd_grad(D, Q, k_s, T=10.0, den=1000.0):
     f = friction_factor(D, Q, k_s, T, den)
     vel_sq = np.power((Q / x_sec_area(D)), 2)
     return (f * vel_sq) / (D * 2 * g)
+
+def hyd_grad_hw(D, Q, C):
+    """Headloss per unit length of pipe (in m) using Hazen Williams eq.
+
+    Keyword arguments:
+    D -- internal diameter (m)
+    Q -- flow (m^3s^-1)
+    C -- Hazen Williams coeff (-)
+
+    """
+    return 1.2e10 * np.power(Q * 1000.0, 1.85) / (np.power(C, 1.85) * np.power(D * 1000.0, 4.87))
 
 def shear_stress(D, Q, k_s, T = 10.0, den = 1000.0):
     """Hydraulic shear stress at pipe wall (in Pa).
@@ -170,6 +181,21 @@ def flow_from_shear(D, tau_a, k_s, T=10., den=1000.):
     if np.any(tau_a <= 0):
         raise ValueError("Non-positive shear stress.")
     return _flow_from_shear_v(D, tau_a, k_s, T, den)
+
+def hw_C_to_cw_k_s(D, Q, C):
+    """Numerically find Colebrook White k_s given Hazen Williams C and typical flow Q
+
+    Keyword arguments:
+    D -- internal diameter (m)
+    Q -- representative flow (m^3s^-1) (used for calibration of hydraulic model)
+    C -- Hazen Williams coefficient (m)
+
+    """
+    res = sp_opt.minimize_scalar(lambda k_s : pl.absolute(hyd_grad_hw(D, Q, C) - 
+             pyhyd.hyd_grad(D, Q, k_s)), method = 'bounded', bounds = (1e-10, 0.05), tol = 1e-10)
+    if not res.success:
+        raise Exception("Could not convert Hazen Williams C into Colebrook White k_s")
+    return res.x
 
 def settling_velocity(den_part, D_part, T=10., den_fluid=1000.):
     """Settling velocity of a particle in a fluid (Stokes' Law)
