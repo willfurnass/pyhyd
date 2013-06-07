@@ -53,16 +53,16 @@ def reynolds(D, Q, T = 10.0, den = 1000.0):
         raise ValueError("Non-positive fluid density.")
     return ((np.abs(Q) / x_sec_area(D)) * D) / (dyn_visc(T) / (den+0.))
 
-def _friction_factor(D, Q, k_s, T = 10.0, den = 1000.0, warn=False):
+def _friction_factor(D, Q, k_s, T = 10.0, den = 1000.0, warn = False, force_turb_flow = False):
     # Helper function; see friction_factor
     if np.any(k_s < 0):
         raise ValueError("Negative pipe roughness.")
     Re = reynolds(D, Q, T, den)
-    if Re == 0:
+    if Re == 0 and not force_turb_flow:
         f = 0
-    elif Re < 2000:
+    elif Re < 2000 and not force_turb_flow:
         f = 64 / Re
-    elif 2000 <= Re < 4000:
+    elif 2000 <= Re < 4000 and not force_turb_flow:
         y3 = -0.86859 * np.log((k_s / (3.7 * D)) + (5.74 / (4000**0.9)))
         y2 = (k_s / (3.7 * D)) + (5.74 / np.power(Re, 0.9))
         fa = np.power(y3, -2)
@@ -73,7 +73,7 @@ def _friction_factor(D, Q, k_s, T = 10.0, den = 1000.0, warn=False):
         x2 =  0.128 - (17. * fa) + (2.5 * fb)
         x1 = (7 * fa) - fb
         f = x1 + r * (x2 + r * (x3 + x4))
-    elif Re >= 4000:
+    elif Re >= 4000 or force_turb_flow:
         if warn:
             if k_s < 4e-4 or k_s > 5e-2:
                 raise ValueError("Swamee Jain approx to Colebrook White not valid for turb flow as " + 
@@ -85,7 +85,7 @@ def _friction_factor(D, Q, k_s, T = 10.0, den = 1000.0, warn=False):
     return f
 _friction_factor = np.vectorize(_friction_factor)
 
-def friction_factor(D, Q, k_s, T = 10.0, den = 1000.0, warn=False):
+def friction_factor(D, Q, k_s, T = 10.0, den = 1000.0, warn = False, force_turb_flow = False):
     """Darcy-Weisbach friction factor.
     
     Keyword arguments:
@@ -96,6 +96,7 @@ def friction_factor(D, Q, k_s, T = 10.0, den = 1000.0, warn=False):
     den -- density defaults to 1000kg/m^3
     warn -- warn if the Swamee Jain formula is inappropriate 
             due to k_s outside [0.004,0.05] or Re > 10e7
+    force_turb_flow -- boolean : assume flows are only turbulent
 
     Laminar flow:      Hagen-Poiseuille formula
     Transitional flow: cubic interpolation from Moody Diagram 
@@ -104,9 +105,9 @@ def friction_factor(D, Q, k_s, T = 10.0, den = 1000.0, warn=False):
     Turbulent flow: Swamee-Jain approximation of implicit Colebrook-White equation
      
     """
-    return _friction_factor(D, Q, k_s, T, den, warn)
+    return _friction_factor(D, Q, k_s, T, den, warn, force_turb_flow)
 
-def hyd_grad(D, Q, k_s, T=10.0, den=1000.0):
+def hyd_grad(D, Q, k_s, T = 10.0, den = 1000.0, force_turb_flow = False):
     """Headloss per unit length of pipe (in m), using approx. to Colebrook White eq.
 
     Keyword arguments:
@@ -115,13 +116,14 @@ def hyd_grad(D, Q, k_s, T=10.0, den=1000.0):
     k_s -- roughness height (m)
     T -- temperature; defaults to 10degC)
     den -- density defaults to 1000kg/m^3
+    force_turb_flow -- boolean : assume flows are only turbulent
 
     """
     if np.any(den <= 0):
         raise ValueError("Non-positive fluid density.")
     if np.any(D <= 0):
         raise ValueError("Non-positive internal pipe diam.")
-    f = friction_factor(D, Q, k_s, T, den)
+    f = friction_factor(D, Q, k_s, T, den, force_turb_flow = force_turb_flow)
     vel_sq = np.power((Q / x_sec_area(D)), 2)
     return (f * vel_sq) / (D * 2 * g)
 
@@ -136,7 +138,7 @@ def hyd_grad_hw(D, Q, C):
     """
     return 1.2e10 * np.power(Q * 1000.0, 1.85) / (np.power(C, 1.85) * np.power(D * 1000.0, 4.87))
 
-def shear_stress(D, Q, k_s, T = 10.0, den = 1000.0):
+def shear_stress(D, Q, k_s, T = 10.0, den = 1000.0, force_turb_flow = False):
     """Hydraulic shear stress at pipe wall (in Pa).
 
     Keyword arguments:
@@ -145,13 +147,14 @@ def shear_stress(D, Q, k_s, T = 10.0, den = 1000.0):
     k_s -- roughness height (m)
     T -- temperature; defaults to 10degC)
     den -- density defaults to 1000kg/m^3
+    force_turb_flow -- boolean : assume flows are only turbulent
 
     """
     if np.any(den <= 0):
         raise ValueError("Non-positive density")
     if np.any(D <= 0):
         raise ValueError("Non-positive internal pipe diam.")
-    return den * g * (D / 4.0) * hyd_grad(D, Q, k_s, T, den)
+    return den * g * (D / 4.0) * hyd_grad(D, Q, k_s, T, den, force_turb_flow = force_turb_flow)
 
 def _flow_from_shear(D, tau_a, k_s, T, den):
     # Helper function required for numerically finding flow from shear stress
