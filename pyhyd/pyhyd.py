@@ -243,6 +243,7 @@ def flow_unit_conv(Q, from_vol, from_t, to_vol, to_t):
     from_vol -- volume part of current units (one of 'ml', 'mL', 'l', 'L', 'm3', 'm^3', 'Ml', 'ML', 'tcm', 'TCM')
     from_t -- time part of current units (one of 's', 'min', 'hour', 'day', 'd', 'D')
     to_vol -- volume part of new units (one of 'ml', 'mL', 'l', 'L', 'm3', 'm^3', 'Ml', 'ML', 'tcm', 'TCM')
+    to_t -- time part of new units (one of 's', 'min', 'hour', 'day', 'd', 'D')
     
     """
     vol_factors = {'ml':1e-6, 'mL':1e-6, 'l':1e-3, 'L':1e-3, 'm3,':1.0, 'm^3':1.0, 'Ml':1e3, 'ML':1e3, 'tcm':1e3, 'TCM':1e3}
