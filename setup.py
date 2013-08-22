@@ -11,7 +11,7 @@ def read(fname):
 
 setup(
     name = 'pyhyd', # Y
-    version = '0.1.3', # Y
+    version = '0.1.4', # Y
     packages = find_packages(),
 
     install_requires = [
