@@ -59,7 +59,7 @@ def _friction_factor(D, Q, k_s, T = 10.0, den = 1000.0, warn = False, force_turb
         raise ValueError("Negative pipe roughness.")
     Re = reynolds(D, Q, T, den)
     if Re == 0 and not force_turb_flow:
-        f = 0
+        f = 0 * Re
     elif Re < 2000 and not force_turb_flow:
         f = 64 / Re
     elif 2000 <= Re < 4000 and not force_turb_flow:
