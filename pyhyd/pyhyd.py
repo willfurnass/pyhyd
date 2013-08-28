@@ -18,7 +18,7 @@ def x_sec_area(D):
     """
     if np.any(D <= 0):
         raise ValueError("Non-positive internal pipe diam.")
-    return np.pi * np.power((0.5 * D), 2)
+    return np.pi * np.power(D, 2) / 4.0
 
 
 def dyn_visc(T=10.):
@@ -29,10 +29,10 @@ def dyn_visc(T=10.):
 
     See http://en.wikipedia.org/wiki/Viscosity#Viscosity_of_water for eq.
     """
-    if np.any(T <= 0) or np.any(T >= 100):
+    if np.any(T < 0) or np.any(T > 100):
         raise ValueError("Cannot calc dynamic viscosity: " +
                          "temperature outside range [0,100].")
-    A = 2.414*(10**-5)  # Pa.s
+    A = 2.414e-5 # Pa.s
     B = 247.8  # K
     C = 140.0  # K
     return A * np.power(10, (B / (T + 273.15 - C)))
@@ -47,8 +47,6 @@ def reynolds(D, Q, T=10.0, den=1000.0):
         T: temperature; defaults to 10degC)
         den: density defaults to 1000kg/m^3
     """
-    if np.any(D <= 0):
-        raise ValueError("Non-positive internal pipe diam.")
     if np.any(den <= 0):
         raise ValueError("Non-positive fluid density.")
     return ((np.abs(Q) / x_sec_area(D)) * D) / (dyn_visc(T) / (den + 0.))
