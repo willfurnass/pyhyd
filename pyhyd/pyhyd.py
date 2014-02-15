@@ -3,6 +3,11 @@
 Note that SI units are used for all quantities
 """
 
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
+from __future__ import division
+
 import numpy as np
 import scipy.optimize as sp_opt
 np.seterr(all='raise')
@@ -49,7 +54,7 @@ def reynolds(D, Q, T=10.0, den=1000.0):
     """
     if np.any(den <= 0):
         raise ValueError("Non-positive fluid density.")
-    return ((np.abs(Q) / x_sec_area(D)) * D) / (dyn_visc(T) / (den + 0.))
+    return ((np.abs(Q) / x_sec_area(D)) * D) / (dyn_visc(T) / den)
 
 
 def _friction_factor(D, Q, k_s, T=10.0, den=1000.0, warn=False,
@@ -228,8 +233,8 @@ def settling_velocity(den_part, D_part, T=10., den_fluid=1000.):
         raise ValueError("Non-positive particle diameter.")
     if np.any(den_fluid <= 0):
         raise ValueError("Non-positive fluid density.")
-    return (2 / 9.) * ((den_part - den_fluid) / dyn_visc(T)) * g * \
-            np.power((D_part/2.), 2)
+    return (2.0 / 9.0) * ((den_part - den_fluid) / dyn_visc(T)) * g * \
+            np.power((D_part / 2.0), 2)
 
 
 def turnover_time(D, Q, L):
@@ -243,7 +248,7 @@ def turnover_time(D, Q, L):
     if np.any(L <= 0):
         raise ValueError("Non-positive pipe length.")
 
-    return L / (np.abs(Q + 0.0) / x_sec_area(D))
+    return L / (np.abs(Q) / x_sec_area(D))
 
 
 def flow_unit_conv(Q, from_vol, from_t, to_vol, to_t):
@@ -267,14 +272,14 @@ def flow_unit_conv(Q, from_vol, from_t, to_vol, to_t):
 
     for unit in (from_vol, to_vol):
         pass
-        if unit not in vol_factors.keys():
+        if unit not in list(vol_factors.keys()):
             raise Exception("Cannot convert flow units: volume unit " +
-                "{} not in list {}".format(unit, vol_factors.keys()))
+                "{} not in list {}".format(unit, list(vol_factors.keys())))
     for unit in (from_t, to_t):
         pass
-        if unit not in time_factors.keys():
+        if unit not in list(time_factors.keys()):
             raise Exception("Cannot convert flow units: time unit " +
-                "{} not in list {}".format(unit, time_factors.keys()))
+                "{} not in list {}".format(unit, list(time_factors.keys())))
     return Q * (vol_factors[from_vol] / time_factors[from_t]) * \
             (time_factors[to_t] / vol_factors[to_vol])
 
