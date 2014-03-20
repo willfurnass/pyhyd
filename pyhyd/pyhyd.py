@@ -285,7 +285,10 @@ def flow_unit_conv(Q, from_vol, from_t, to_vol, to_t):
 
 
 def bed_shear_velocity(D, Q, k_s, T=10.0, den=1000.0):
-    """Bed shear velocity (c.f. bed shear stress).
+    """Bed/boundary shear velocity / friction velocity.
+
+    Used to compare streamwise velocity with transverse rate of shear.
+    Often ~0.1 of mean flow velocity.
 
     Args:
         D: internal diameter (m)
@@ -298,3 +301,4 @@ def bed_shear_velocity(D, Q, k_s, T=10.0, den=1000.0):
         raise ValueError("Non-positive pipe diam.")
     S_0 = hyd_grad(D, Q, k_s, T, den)
     return np.sqrt(g * (D / 4.0) * S_0)
+    # Alternative eq is np.sqrt(shear_stress(D, Q, k_s, T, den) / den)
