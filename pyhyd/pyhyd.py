@@ -91,7 +91,7 @@ def _friction_factor(D, Q, k_s, T=10.0, den=1000.0, warn=False,
         f = 0.25 / np.power((np.log10((k_s / (3.7 * D)) +
                 (5.74 / np.power(Re, 0.9)))), 2)
     return f
-_friction_factor = np.vectorize(_friction_factor)
+_friction_factor = np.vectorize(pyfunc=_friction_factor, otypes=[np.float])
 
 
 def friction_factor(D, Q, k_s, T=10.0, den=1000.0, warn=False,
