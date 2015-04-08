@@ -1,5 +1,5 @@
 from setuptools import setup, find_packages
-import os 
+import os
 
 
 # Utility function to read the README file.
@@ -11,7 +11,7 @@ def read(fname):
 
 setup(
     name = 'pyhyd', # Y
-    version = '0.1.4', # Y
+    version = '0.1.5', # Y
     packages = find_packages(),
 
     install_requires = [
@@ -21,7 +21,7 @@ setup(
 
     author = 'Will Furnass',
     author_email = 'will@thearete.co.uk',
-    description='Functions for calculating various hydraulic quantities relating to ' + 
+    description='Functions for calculating various hydraulic quantities relating to ' +
                 'drinking water distribution networks',
     license='GPL 3.0',
     keywords='hydraulics drinking water distribution systems',
