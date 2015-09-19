@@ -1,0 +1,24 @@
+.. pyhyd documentation master file, created by
+   sphinx-quickstart on Mon Apr 13 15:56:28 2015.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+Welcome to pyhyd's documentation!
+=================================
+
+Contents:
+
+.. toctree::
+   :maxdepth: 2
+.. automodule:: pyhyd.pyhyd
+   :members:
+
+
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
+
