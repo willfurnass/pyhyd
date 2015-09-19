@@ -1,0 +1,23 @@
+package:
+  name: pyhyd
+  version: "0.1.5"
+ 
+source:
+  path: ..
+ 
+requirements:
+  build:
+    - python
+    - setuptools
+    - numpy >=1.5.1
+    - scipy >=0.11.0
+  run:
+    - python
+    - numpy >=1.5.1
+    - scipy >=0.11.0
+ 
+about:
+  home: https://github.com/willfurnass/pyhyd
+  license: GPL 3.0
+  license_file: LICENSE.txt
+  summary: Functions for calculating various hydraulic quantities relating to drinking water distribution networks
