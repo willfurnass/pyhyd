@@ -246,7 +246,7 @@ def hyd_grad_hw(D, Q, C):
     """
     if np.any(D <= 0):
         raise ValueError("Non-positive internal pipe diam.")
-    return 1.2e10 * np.power(Q * 1000.0, 1.85) / \
+    return 1.2e10 * np.power(np.abs(Q) * 1000.0, 1.85) / \
         (np.power(C, 1.85) * np.power(D * 1000.0, 4.87))
 
 
