@@ -136,7 +136,7 @@ def _friction_factor(D, Q, k_s, T=10.0, den=1000.0, warn=False,
                                  "valid for turb flow as Re={} ".format(Re) +
                                  "greater than 10,000,000")
         f = 0.25 / np.power((np.log10((k_s / (3.7 * D)) +
-                (5.74 / np.power(Re, 0.9)))), 2)
+            (5.74 / np.power(Re, 0.9)))), 2)
     return f
 _friction_factor = np.vectorize(pyfunc=_friction_factor, otypes=[np.float])
 
@@ -244,8 +244,10 @@ def hyd_grad_hw(D, Q, C):
     array_like(float)
         Headloss(es) per unit length of pipe [-]
     """
+    if np.any(D <= 0):
+        raise ValueError("Non-positive internal pipe diam.")
     return 1.2e10 * np.power(Q * 1000.0, 1.85) / \
-            (np.power(C, 1.85) * np.power(D * 1000.0, 4.87))
+        (np.power(C, 1.85) * np.power(D * 1000.0, 4.87))
 
 
 def shear_stress(D, Q, k_s, T=10.0, den=1000.0, force_turb_flow=False):
@@ -393,7 +395,7 @@ def settling_velocity(den_part, D_part, T=10., den_fluid=1000.):
     if np.any(den_fluid <= 0):
         raise ValueError("Non-positive fluid density.")
     return (2.0 / 9.0) * ((den_part - den_fluid) / dyn_visc(T)) * g * \
-            np.power((D_part / 2.0), 2)
+        np.power((D_part / 2.0), 2)
 
 
 def turnover_time(D, Q, L):
